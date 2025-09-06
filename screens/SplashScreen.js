@@ -5,26 +5,37 @@ import { Audio } from 'expo-av';
 export default function SplashScreen({ navigation }) {
   useEffect(() => {
     let sound;
-    const playSound = async () => {
+
+    const boot = async () => {
       try {
+        // iOS: permitir reproducir aún en modo silencio
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          allowsRecordingIOS: false,
+          staysActiveInBackground: false,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
+          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
+        });
+
         sound = new Audio.Sound();
         await sound.loadAsync(require('../assets/ladrido.mp3'));
         await sound.playAsync();
-      } catch (error) {
-        console.log('Error reproduciendo sonido:', error);
+      } catch (e) {
+        console.log('Error reproduciendo sonido:', e?.message || e);
       }
     };
-    playSound();
+
+    boot();
 
     const timer = setTimeout(() => {
-      navigation.replace('Inicio');
+      navigation.replace('Inicio'); // <- después del splash, tu pantalla de Inicio
     }, 2500);
 
     return () => {
       clearTimeout(timer);
-      if (sound) {
-        sound.unloadAsync();
-      }
+      if (sound) sound.unloadAsync().catch(() => {});
     };
   }, []);
 
@@ -37,20 +48,7 @@ export default function SplashScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff8f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 30,
-    fontWeight: 'bold',
-    color: '#ff5f45',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#333',
-    marginTop: 10,
-  },
+  container: { flex: 1, backgroundColor: '#fff8f0', alignItems: 'center', justifyContent: 'center' },
+  title: { fontSize: 30, fontWeight: 'bold', color: '#ff5f45' },
+  subtitle: { fontSize: 16, color: '#333', marginTop: 10 },
 });
