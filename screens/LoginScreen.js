@@ -8,10 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
-// Si ya creaste config.js, usa esta línea:
-import { API_URL } from '../config';
-// Si no, puedes dejar temporalmente:
-// const API_URL = 'https://paseos-api-h664.onrender.com/api';
+import { API_URL } from '../config'; // debe traer .../api
 
 export default function LoginScreen({ navigation }) {
   const [correo, setCorreo] = useState('');
@@ -26,41 +23,56 @@ export default function LoginScreen({ navigation }) {
       }
       setLoading(true);
 
-      const res = await fetch(`${API_URL}/auth/login`, {
+      const url = `${API_URL}/auth/login`;
+      const res = await fetch(url, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
           email: correo.trim().toLowerCase(),
           password,
         }),
       });
 
-      const data = await res.json().catch(() => ({}));
+      const status = res.status;
+      const ct = res.headers.get('content-type') || '';
+      const raw = await res.text();   // leemos texto crudo para poder loguear errores HTML/404
+      let data = null;
+      try { data = JSON.parse(raw); } catch {}
+
+      console.log('LOGIN DEBUG =>', {
+        url,
+        status,
+        contentType: ct,
+        raw: raw?.slice(0, 400) // recorte para que no sea enorme
+      });
+
+      if (!ct.includes('application/json')) {
+        throw new Error(`Respuesta no JSON (${status}). Revisa que API_URL tenga /api y el endpoint sea /auth/login`);
+      }
       if (!res.ok) {
-        throw new Error(data?.message || 'Error al iniciar sesión');
+        throw new Error(data?.message || `HTTP ${status}`);
       }
 
-      // Guarda token y usuario para reutilizar en otras pantallas
-      if (data?.token) await SecureStore.setItemAsync('token', data.token);
-      if (data?.user)  await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+      const token = data?.token;
+      const user  = data?.user;
 
-      // Navega según el rol (replace para que no vuelva al login con "atrás")
-      if (data.user.role === 'cliente') {
-        navigation.replace('Cliente');
-      } else if (data.user.role === 'paseador') {
-        navigation.replace('Paseador');
-      } else {
-        navigation.replace('Inicio');
+      if (!token || !user) {
+        throw new Error('El backend no devolvió { token, user }.');
       }
+
+      await SecureStore.setItemAsync('token', token);
+      await SecureStore.setItemAsync('user', JSON.stringify(user));
+
+      // navega a pantallas que EXISTEN en tu navigator
+      const role = (user.role || user.type || '').toLowerCase();
+      const destino = role === 'paseador' ? 'Paseador' : 'Cliente';
+      navigation.reset({ index: 0, routes: [{ name: destino }] });
     } catch (e) {
-      Alert.alert('Error', e.message);
+      console.error('Error en login:', e?.message);
+      Alert.alert('Error', e?.message || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
-  };
-
-  const recuperarContrasena = () => {
-    Alert.alert('Recuperación', 'En la siguiente versión podrás restablecer tu contraseña.');
   };
 
   return (
@@ -87,10 +99,6 @@ export default function LoginScreen({ navigation }) {
 
       <TouchableOpacity style={styles.button} onPress={iniciarSesion} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Entrando...' : 'Entrar'}</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity onPress={recuperarContrasena}>
-        <Text style={styles.linkText}>¿Olvidaste tu contraseña?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -131,11 +139,5 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 17,
     fontWeight: 'bold',
-  },
-  linkText: {
-    marginTop: 20,
-    textAlign: 'center',
-    color: '#1976d2',
-    fontWeight: '600',
   },
 });
