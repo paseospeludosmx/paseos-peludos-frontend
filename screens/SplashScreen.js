@@ -8,15 +8,12 @@ export default function SplashScreen({ navigation }) {
 
     const boot = async () => {
       try {
-        // iOS: permitir reproducir aún en modo silencio
         await Audio.setAudioModeAsync({
           playsInSilentModeIOS: true,
           allowsRecordingIOS: false,
           staysActiveInBackground: false,
           shouldDuckAndroid: true,
           playThroughEarpieceAndroid: false,
-          interruptionModeIOS: Audio.INTERRUPTION_MODE_IOS_DO_NOT_MIX,
-          interruptionModeAndroid: Audio.INTERRUPTION_MODE_ANDROID_DO_NOT_MIX,
         });
 
         sound = new Audio.Sound();
@@ -30,7 +27,7 @@ export default function SplashScreen({ navigation }) {
     boot();
 
     const timer = setTimeout(() => {
-      navigation.replace('Inicio'); // <- después del splash, tu pantalla de Inicio
+      navigation.replace('Inicio');
     }, 2500);
 
     return () => {
