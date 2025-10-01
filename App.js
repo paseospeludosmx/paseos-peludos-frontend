@@ -8,10 +8,13 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import PantallaCliente from './screens/PantallaCliente';
-import PantallaPaseador from './screens/PantallaPaseador';
+// import PantallaPaseador from './screens/PantallaPaseador'; // ← ya no se usa aquí
 import DisponiblesScreen from './screens/DisponiblesScreen';
 import HistorialPaseosScreen from './screens/HistorialPaseosScreen';
 import HistorialCliente from './screens/HistorialCliente';
+
+// ⬇️ NUEVO: pantalla del paseador con botón "Ponerme disponible"
+import PaseadorHome from './screens/PaseadorHome';
 
 // URL pública de tu backend en Render
 const API_URL = 'https://paseos-api-h664.onrender.com';
@@ -48,7 +51,8 @@ export default function App() {
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Registro" component={RegisterScreen} />
         <Stack.Screen name="Cliente" component={PantallaCliente} />
-        <Stack.Screen name="Paseador" component={PantallaPaseador} />
+        {/* ⬇️ REGISTRO EXACTO DE LA PANTALLA "Paseador" */}
+        <Stack.Screen name="Paseador" component={PaseadorHome} />
         <Stack.Screen name="Disponibles" component={DisponiblesScreen} />
         <Stack.Screen name="Historial" component={HistorialPaseosScreen} />
         <Stack.Screen name="HistorialCliente" component={HistorialCliente} />
